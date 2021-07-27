@@ -1,0 +1,166 @@
+  Import-Module ActiveDirectory
+function Main-Menu
+{
+     param (
+           [string]$Title = 'ActiveDirectory'
+     )
+     cls
+     Write-Host "================ $Title ================"
+    
+     Write-Host "1: DomainFRA."
+     Write-Host "2: DomainEURO."
+     Write-Host "3: DomainONED."
+     Write-Host "Q: 'Q' pour quitter."
+     Write-Host "================================================="
+}
+
+function Test-Cred {
+           
+    [CmdletBinding()]
+    [OutputType([String])] 
+       
+    Param ( 
+        [Parameter( 
+            Mandatory = $false, 
+            ValueFromPipeLine = $true, 
+            ValueFromPipelineByPropertyName = $true
+        )] 
+        [Alias( 
+            'PSCredential'
+        )] 
+        [ValidateNotNull()] 
+        [System.Management.Automation.PSCredential]
+        [System.Management.Automation.Credential()] 
+        $Credentials
+    )
+    $Domain = $null
+    $Root = $null
+    $Username = $null
+    $Password = $null
+      
+    If($Credentials -eq $null)
+    {
+        Try
+        {
+            $Credentials = Get-Credential "domain\$env:username" -ErrorAction Stop
+        }
+        Catch
+        {
+            $ErrorMsg = $_.Exception.Message
+            Write-Warning "Failed to validate credentials: $ErrorMsg "
+            Pause
+            Break
+        }
+    }
+      
+    # Checking module
+    Try
+    {
+        # Split username and password
+        $Username = $credentials.username
+        $Password = $credentials.GetNetworkCredential().password
+  
+        # Get Domain
+        $Root = "LDAP://" + ([ADSI]'').distinguishedName
+        $Domain = New-Object System.DirectoryServices.DirectoryEntry($Root,$UserName,$Password)
+    }
+    Catch
+    {
+        $_.Exception.Message
+        Continue
+    }
+  
+    If(!$domain)
+    {
+        Write-Warning "Something went wrong"
+    }
+    Else
+    {
+        If ($domain.name -ne $null)
+        {
+            return "Authenticated"
+        }
+        Else
+        {
+            return "Not authenticated"
+        }
+    }
+}
+
+function menueuro
+{
+     param (
+           [string]$Title = 'DomainFRA'
+     )
+          cls
+     Write-Host "================ $env:UserDomain ================"
+    
+     Write-Host "1: Lister un utilisateur de l'ad"
+     Write-Host "2: reset password."
+     Write-Host "3: Ajout de droit AD."
+     Write-Host "4: Pour retourner au menu principal"
+     Write-Host "Q: 'Q' pour quitter."
+     write-Host "================================================="
+ }
+ function euro
+{
+    if (-not $EUROcred -or $CredCheck -ne "Authenticated") {
+    $EUROcred = Get-Credential | Out-Null
+    $CredCheck = $EUROcred | Test-Cred
+    If($CredCheck -ne "Authenticated")
+{
+    Write-Warning "Credential validation failed"
+    euro
+}
+    }
+ do
+{
+     menueuro
+     
+    
+     $test = Read-Host "Faites vos choix"
+switch ($test)
+     {
+         '1' {
+            Get-ADUser -Server "euro.net.intra" -Identity admeurod38477 -Properties * -Credential $EUROcred
+
+         } '2' {
+               cls
+               
+              $user=Read-Host "Veuillez saisir le de l'utilisateur : "
+             $NewPasswd=Read-Host "Veuillez saisir le nouveau mot de passe : " –AsSecureString
+             Set-ADAccountPassword -Server "euro.net.intra"  $user -Reset –NewPassword $NewPasswd –PassThru | Set-ADuser -ChangePasswordAtLogon $True
+         } '3' {
+
+                 }
+        '4' {
+             return Main-Menu
+         }
+     }
+     pause
+ }
+ until ($test -eq 'q')
+ }
+
+
+
+
+
+do
+ {
+     Main-Menu
+     $selection = Read-Host "Please make a selection"
+     switch ($selection)
+     {
+         '1' {
+         cls
+        fra
+         } '2' {
+            euro
+         } '3' {
+             'You chose option #3'
+         }
+     }
+     pause
+ }
+ until ($selection -eq 'q')

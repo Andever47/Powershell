@@ -1,0 +1,1 @@
+﻿DISM.exe /Online /Add-Package /PackagePath:C:\TEMP\KB\kb4601347.cab /Quiet /r /f
